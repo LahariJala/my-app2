@@ -15,10 +15,11 @@ const SearchBar = ({ onSelectLocation }) => {
     const data = await response.json();
 
     if (data.results && data.results.length > 0) {
-      const { lat, lng } = data.results[0].geometry;
-      const formatted = data.results[0].formatted; // location name
-      onSelectLocation({ lat, lng, name: formatted }); // ✅ FIXED
-    } else {
+  const { lat, lng } = data.results[0].geometry;
+  const name = data.results[0].formatted; // ← Add this
+  onSelectLocation({ lat, lng, name });   // ← Important!
+}
+    else {
       alert("Location not found.");
     }
   };

@@ -109,6 +109,46 @@ const MapComponent = ({ selectedLayers, mapCenter, onMapClick }) => {
       .then((data) => setIndiaBoundary(data))
       .catch((err) => console.error("Error loading India border:", err));
   }, []);
+// Custom Weather Effect Overlay
+const WeatherOverlay = ({ condition }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    let overlay;
+
+    if (!condition) return;
+
+    // Example effect overlays
+    if (condition.includes("rain")) {
+      overlay = L.tileLayer(
+        "https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=YOUR_OPENWEATHER_API_KEY",
+        { opacity: 0.6 }
+      );
+    } else if (condition.includes("wind")) {
+      overlay = L.tileLayer(
+        "https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=YOUR_OPENWEATHER_API_KEY",
+        { opacity: 0.6 }
+      );
+    } else if (condition.includes("cloud")) {
+      overlay = L.tileLayer(
+        "https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=YOUR_OPENWEATHER_API_KEY",
+        { opacity: 0.4 }
+      );
+    }
+
+    if (overlay) {
+      map.addLayer(overlay);
+    }
+
+    return () => {
+      if (overlay) {
+        map.removeLayer(overlay);
+      }
+    };
+  }, [condition, map]);
+
+  return null;
+};
 
   return (
     <div style={{ position: "relative" }}>
@@ -124,6 +164,7 @@ const MapComponent = ({ selectedLayers, mapCenter, onMapClick }) => {
           attribution='&copy; <a href="https://osm.org">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <WeatherOverlay condition={selectedWeatherCondition?.toLowerCase()} />
 
         <FlyToLocation center={safeCenter} />
         <MapEvents onMapClick={onMapClick} />
