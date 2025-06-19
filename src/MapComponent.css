@@ -1,0 +1,9 @@
+/* Optional: custom styling */
+.layer-label {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 5px;
+  font-size: 12px;
+}
