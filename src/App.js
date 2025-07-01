@@ -2,181 +2,191 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 
-import MapComponent from "./MapComponent";
-import SearchBar from "./SearchBar";
-import FilterBox from "./FilterBox";
-import SoilMoisturePopup from "./SoilMoisturePopup";
-import WeatherPopup from "./WeatherPopup";
-import FloodPopup from "./FloodPopup";
-import ActivityLogger from "./ActivityLogger";
-import ActivityCalendar from "./ActivityCalendar";
+import MainApp    from "./MainApp";
 import FarmMarket from "./FarmMarket";
-import MainApp from "./MainApp";
 
 import "./App.css";
 
-function App() {
+export default function App() {
+  /* ─────────── STATE ─────────── */
   const [activityLog, setActivityLog] = useState(() => {
     const saved = localStorage.getItem("farmActivities");
     return saved ? JSON.parse(saved) : [];
   });
-
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [editingActivity, setEditingActivity] = useState(null);
-  const [showLogger, setShowLogger] = useState(false);
-  const [showActivityCalendar, setShowActivityCalendar] = useState(false);
+  const [remindedActivities, setRemindedActivities] = useState([]);
 
   const [selectedLayers, setSelectedLayers] = useState({
     soilMoisture: false,
-    weather: false,
-    flood: false,
+    weather:      false,
+    flood:        false,
+    ndvi:         false          // ✅ NDVI layer flag
   });
 
-  const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]);
+  const [mapCenter, setMapCenter]         = useState({ lat: 20.5937, lng: 78.9629 });
   const [selectedLanguage, setSelectedLanguage] = useState("en");
-  const [showSoilMoisture, setShowSoilMoisture] = useState(false);
+
+  /* pop‑up flags */
   const [showWeather, setShowWeather] = useState(false);
-  const [showFlood, setShowFlood] = useState(false);
+  const [showFlood,   setShowFlood]   = useState(false);
+  const [showNDVI,    setShowNDVI]    = useState(false);
+
+  /* activity UI flags */
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [editingActivity,  setEditingActivity]  = useState(null);
+  const [showLogger,       setShowLogger]       = useState(false);
+  const [showActivityCalendar, setShowActivityCalendar] = useState(false);
+
   const [selectedWeatherCondition, setSelectedWeatherCondition] = useState(null);
 
+  /* ─────────── EFFECTS ─────────── */
   useEffect(() => {
     localStorage.setItem("farmActivities", JSON.stringify(activityLog));
   }, [activityLog]);
 
-  const handleMapClick = async (latlng) => {
-    const { lat, lng } = latlng || {};
-    if (typeof lat === "number" && typeof lng === "number") {
-      setMapCenter([lat, lng]);
-      setSelectedLocation({ lat, lng });
-      setShowLogger(true);
+  /* 15‑minute reminder */
+  useEffect(() => {
+    const id = setInterval(() => {
+      const now = new Date();
+      activityLog.forEach(a => {
+        const diff = new Date(a.date) - now;
+        if (diff > 0 && diff < 15 * 60 * 1000 && !remindedActivities.includes(a.id)) {
+          alert(`⏰ Reminder: ${a.type} at ${a.lat}, ${a.lon}`);
+          setRemindedActivities(prev => [...prev, a.id]);
+        }
+      });
+    }, 60000);
+    return () => clearInterval(id);
+  }, [activityLog, remindedActivities]);
 
-      try {
-        const res = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${process.env.REACT_APP_OPENWEATHER_API_KEY}`
-        );
-        const data = await res.json();
-        const weatherCondition = data?.weather?.[0]?.main || "";
-        setSelectedWeatherCondition(weatherCondition);
-      } catch (err) {
-        console.error("Failed to fetch weather:", err);
-      }
-    }
-  };
-
+  /* ─────────── LAYER TOGGLES ─────────── */
   const toggleSoilMoisture = () => {
-    setShowSoilMoisture(true);
-    setShowWeather(false);
-    setShowFlood(false);
+    setSelectedLayers({ soilMoisture:true, weather:false, flood:false, ndvi:false });
+    setShowWeather(false); setShowFlood(false); setShowNDVI(false);
   };
-
   const toggleWeather = () => {
-    setShowWeather(true);
-    setShowSoilMoisture(false);
-    setShowFlood(false);
+    setSelectedLayers({ soilMoisture:false, weather:true, flood:false, ndvi:false });
+    setShowWeather(true); setShowFlood(false); setShowNDVI(false);
   };
-
   const toggleFlood = () => {
-    setShowFlood(true);
-    setShowSoilMoisture(false);
-    setShowWeather(false);
+    setSelectedLayers({ soilMoisture:false, weather:false, flood:true, ndvi:false });
+    setShowFlood(true); setShowWeather(false); setShowNDVI(false);
+  };
+  const toggleNDVI = () => {
+    setSelectedLayers({ soilMoisture:false, weather:false, flood:false, ndvi:true });
+    setShowNDVI(true); setShowWeather(false); setShowFlood(false);
   };
 
   const handleClosePopup = (type) => {
-    if (type === "soilMoisture") setShowSoilMoisture(false);
-    else if (type === "weather") setShowWeather(false);
-    else if (type === "flood") setShowFlood(false);
+    if (type === "weather") setShowWeather(false);
+    if (type === "flood")   setShowFlood(false);
+    if (type === "ndvi")    setShowNDVI(false);   // ✅ close NDVI
   };
 
-  const handleSaveActivity = (activity) => {
-    if (editingActivity) {
-      const updated = activityLog.map((a) =>
-        a.date === editingActivity.date &&
-        a.lat === editingActivity.lat &&
-        a.lon === editingActivity.lon
-          ? activity
-          : a
-      );
-      setActivityLog(updated);
-    } else {
-      setActivityLog([...activityLog, activity]);
+  /* ─────────── MAP CLICK ─────────── */
+  const handleMapClick = async ({ lat, lng }) => {
+    setMapCenter({ lat, lng });
+
+    /* weather symbol */
+    try {
+      const key  = process.env.REACT_APP_OPENWEATHER_API_KEY;
+      const json = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${key}`
+      ).then(r => r.json());
+      setSelectedWeatherCondition(json?.weather?.[0]?.main || "");
+    } catch {/* ignore */}
+
+    /* DIGIPIN */
+    try {
+      const digi = await fetch(
+        `http://localhost:5000/api/digipin/encode?latitude=${lat}&longitude=${lng}`
+      ).then(r => r.json());
+      setSelectedLocation({ lat, lng, digipin:digi.digipin || "Unavailable" });
+    } catch {
+      setSelectedLocation({ lat, lng, digipin:"Unavailable" });
     }
-    setShowLogger(false);
-    setEditingActivity(null);
   };
 
-  const handleDeleteActivity = (toDelete) => {
-    const updated = activityLog.filter(
-      (a) =>
-        !(
-          a.date === toDelete.date &&
-          a.lat === toDelete.lat &&
-          a.lon === toDelete.lon
-        )
-    );
-    setActivityLog(updated);
+  /* ─────────── ACTIVITY HELPERS ─────────── */
+  const handleSaveActivity = (a) => {
+    const act = { ...a, id: a.id || Date.now() };
+    if (editingActivity) {
+      setActivityLog(prev => prev.map(p => p.id===editingActivity.id ? act : p));
+    } else {
+      setActivityLog(prev => [...prev, act]);
+    }
+    setShowLogger(false); setEditingActivity(null);
   };
-
-  const handleEditActivity = (activity) => {
-    setSelectedLocation({ lat: activity.lat, lng: activity.lon });
-    setEditingActivity(activity);
-    setShowLogger(true);
+  const handleDeleteActivity = (a) =>
+    setActivityLog(prev => prev.filter(p => p.id !== a.id));
+  const handleEditActivity = (a) => {
+    setSelectedLocation({ lat:a.lat, lng:a.lon });
+    setEditingActivity(a); setShowLogger(true);
   };
-
   const handleAddActivityManual = () => {
-    setSelectedLocation({ lat: 20.5937, lng: 78.9629 });
-    setEditingActivity(null);
-    setShowLogger(true);
+    setSelectedLocation({ lat:20.5937, lng:78.9629 });
+    setEditingActivity(null); setShowLogger(true);
   };
 
-  return (
-    <div className="App">
-      <SearchBar
-        onSelectLocation={(location) => {
-          setMapCenter([location.lat, location.lng]);
-          setSelectedLocation(location);
-          setShowLogger(true);
-        }}
-      />
+  /* search bar selection */
+  const handleSelectLocation = async ({ lat, lng, name }) => {
+    try {
+      const digi = await fetch(
+        `http://localhost:5000/api/digipin/encode?latitude=${lat}&longitude=${lng}`
+      ).then(r => r.json());
+      setMapCenter({ lat, lng });
+      setSelectedLocation({ lat, lng, name, digipin:digi.digipin || "Unavailable" });
+    } catch {/* ignore */}
+  };
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <MainApp
-              selectedLayers={selectedLayers}
-              setSelectedLayers={setSelectedLayers}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
-              onSoilMoistureToggle={toggleSoilMoisture}
-              onWeatherToggle={toggleWeather}
-              onFloodToggle={toggleFlood}
-              onToggleCalendar={() => setShowActivityCalendar(true)}
-              onAddActivity={handleAddActivityManual}
-              showSoilMoisture={showSoilMoisture}
-              showWeather={showWeather}
-              showFlood={showFlood}
-              handleClosePopup={handleClosePopup}
-              mapCenter={mapCenter}
-              selectedLocation={selectedLocation}
-              showLogger={showLogger}
-              editingActivity={editingActivity}
-              onSaveActivity={handleSaveActivity}
-              setShowLogger={setShowLogger}
-              setEditingActivity={setEditingActivity}
-              activityLog={activityLog}
-              showActivityCalendar={showActivityCalendar}
-              onDeleteActivity={handleDeleteActivity}
-              onEditActivity={handleEditActivity}
-              onCloseCalendar={() => setShowActivityCalendar(false)}
-              handleMapClick={handleMapClick}
-              selectedWeatherCondition={selectedWeatherCondition}
-            />
-          }
-        />
-        <Route path="/farm-market" element={<FarmMarket />} />
-      </Routes>
-    </div>
+  /* ─────────── ROUTES ─────────── */
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <MainApp
+            /* language */
+            selectedLanguage={selectedLanguage}
+            setSelectedLanguage={setSelectedLanguage}
+
+            /* layers & toggles */
+            selectedLayers={selectedLayers}
+            setSelectedLayers={setSelectedLayers}
+            onSoilMoistureToggle={toggleSoilMoisture}
+            onWeatherToggle={toggleWeather}
+            onFloodToggle={toggleFlood}
+            onNDVIToggle={toggleNDVI}
+
+            /* popups */
+            showWeather={showWeather}
+            showFlood={showFlood}
+            showNDVI={showNDVI}
+            handleClosePopup={handleClosePopup}
+
+            /* map */
+            mapCenter={mapCenter}
+            handleMapClick={handleMapClick}
+            selectedWeatherCondition={selectedWeatherCondition}
+            onSelectLocation={handleSelectLocation}
+
+            /* activities */
+            selectedLocation={selectedLocation}
+            showLogger={showLogger}
+            editingActivity={editingActivity}
+            onSaveActivity={handleSaveActivity}
+            setShowLogger={setShowLogger}
+            setEditingActivity={setEditingActivity}
+            activityLog={activityLog}
+            showActivityCalendar={showActivityCalendar}
+            onDeleteActivity={handleDeleteActivity}
+            onEditActivity={handleEditActivity}
+            onCloseCalendar={() => setShowActivityCalendar(false)}
+            onToggleCalendar={() => setShowActivityCalendar(true)}
+            onAddActivity={handleAddActivityManual}
+          />
+        }
+      />
+      <Route path="/farm-market" element={<FarmMarket />} />
+    </Routes>
   );
 }
-
-export default App;

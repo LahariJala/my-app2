@@ -8,11 +8,12 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
   const [loading, setLoading] = useState(false);
 
   const fallback = [20.5937, 78.9629]; // India default
-  const [lat, lon] = Array.isArray(mapCenter) && mapCenter.length === 2
-    ? mapCenter
-    : fallback;
 
   useEffect(() => {
+    const [lat, lon] = Array.isArray(mapCenter) && mapCenter.length === 2
+      ? mapCenter
+      : fallback;
+
     const API_KEY = process.env.REACT_APP_OPENWEATHER_API_KEY;
 
     if (!API_KEY) {
@@ -66,7 +67,6 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
 
         setWeatherData(summary);
 
-        // Provide agriculture advice based on weather
         const advice = summary.map(day => {
           if (day.max > 35) {
             return `High temperature expected. Ensure adequate watering and provide shade for crops.`;
@@ -78,6 +78,7 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
             return `Weather conditions are favorable for crops.`;
           }
         });
+
         setAgricultureAdvice(advice);
       } catch (err) {
         console.error("Weather error:", err);
@@ -88,7 +89,7 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
     };
 
     fetchWeather();
-  }, [lat, lon]);
+  }, [mapCenter]); // ✅ Refetch weather when location changes
 
   return (
     <div style={{
@@ -100,7 +101,8 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
       padding: '14px',
       borderRadius: '12px',
       boxShadow: '0 6px 18px rgba(0,0,0,0.25)',
-      zIndex: 1000
+      zIndex: 1000,
+      ...style
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <h3 style={{ margin: 0 }}>Weather Forecast</h3>

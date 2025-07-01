@@ -1,15 +1,17 @@
 // src/MainApp.js
-import React, { useState } from "react";
+import React from "react";
 import FilterBox from "./FilterBox";
-import SoilMoisturePopup from "./SoilMoisturePopup";
 import WeatherPopup from "./WeatherPopup";
 import FloodPopup from "./FloodPopup";
 import ActivityLogger from "./ActivityLogger";
 import ActivityCalendar from "./ActivityCalendar";
 import MapComponent from "./MapComponent";
+import SearchBar from "./SearchBar";
+import NDVIPopup   from "./NDVIPopup";
+console.log("NDVI typeof:", typeof NDVIPopup, NDVIPopup);
+
 
 const MainApp = (props) => {
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
   return (
     <>
       <FilterBox
@@ -22,15 +24,11 @@ const MainApp = (props) => {
         onFloodToggle={props.onFloodToggle}
         onToggleCalendar={props.onToggleCalendar}
         onAddActivity={props.onAddActivity}
+        onNDVIToggle={props.onNDVIToggle}
       />
 
-      {props.showSoilMoisture && (
-        <SoilMoisturePopup
-          mapCenter={props.mapCenter}
-          onClose={() => props.handleClosePopup("soilMoisture")}
-          selectedLanguage={selectedLanguage}
-        />
-      )}
+      <SearchBar onSelectLocation={props.onSelectLocation} />
+
       {props.showWeather && (
         <WeatherPopup
           mapCenter={props.mapCenter}
@@ -64,12 +62,22 @@ const MainApp = (props) => {
           onClose={props.onCloseCalendar}
         />
       )}
+      {props.showNDVI && (
+  <NDVIPopup
+     mapCenter={props.mapCenter}
+     onClose={()=>props.handleClosePopup("ndvi")}
+     selectedLanguage={props.selectedLanguage}
+  />
+)}
 
       <MapComponent
         mapCenter={props.mapCenter}
         onMapClick={props.handleMapClick}
         selectedLayers={props.selectedLayers}
         selectedWeatherCondition={props.selectedWeatherCondition}
+        digipin={props.selectedLocation?.digipin}
+        selectedLanguage={props.selectedLanguage}
+        showSoilMoisture={props.selectedLayers.soilMoisture} // ✅ FIXED
       />
     </>
   );

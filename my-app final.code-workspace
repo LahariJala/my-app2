@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "chatbot-server",
+			"path": "../chatbot-server"
+		},
+		{
+			"name": "my-app",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
