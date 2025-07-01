@@ -123,7 +123,7 @@ const MapComponent = ({
       : [20.5937, 78.9629];
 
   useEffect(() => {
-    fetch("/India_borders.geojson")
+    fetch("India_borders.geojson")
       .then((res) => res.json())
       .then((data) => setIndiaBoundary(data))
       .catch((err) => console.error("Error loading India border:", err));
