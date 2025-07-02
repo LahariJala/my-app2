@@ -9,10 +9,10 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
 
   const fallback = [20.5937, 78.9629]; // India default
 
- useEffect(() => {
-  const [lat, lon] = mapCenter?.lat && mapCenter?.lng
-    ? [mapCenter.lat, mapCenter.lng]
-    : fallback;
+  useEffect(() => {
+    const [lat, lon] = mapCenter?.lat && mapCenter?.lng
+      ? [mapCenter.lat, mapCenter.lng]
+      : fallback;
 
     const API_KEY = process.env.REACT_APP_OPENWEATHER_API_KEY;
 
@@ -55,12 +55,18 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
         const summary = Object.keys(dailyData).slice(0, 4).map((date, i) => {
           const dayData = dailyData[date];
           const temps = dayData.map(d => d.main.temp);
+          const clouds = dayData.map(d => d.clouds?.all ?? 0);
+          const avgClouds = clouds.length
+            ? (clouds.reduce((a, b) => a + b, 0) / clouds.length).toFixed(0)
+            : "N/A";
+
           return {
             date,
             min: Math.min(...temps),
             max: Math.max(...temps),
             desc: dayData[0]?.weather?.[0]?.description || "N/A",
             humidity: dayData[0]?.main?.humidity ?? "N/A",
+            clouds: avgClouds,
             isToday: i === 0
           };
         });
@@ -89,8 +95,7 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
     };
 
     fetchWeather();
-  }, [JSON.stringify(mapCenter)]);
- // ✅ Refetch weather when location changes
+  }, [JSON.stringify(mapCenter)]); // ✅ Refetch weather when location changes
 
   return (
     <div style={{
@@ -130,7 +135,8 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
           <p style={{ margin: '6px 0' }}>
             🌤 Condition: <b>{day.desc}</b><br />
             🌡 Temp: <b>{day.min.toFixed(1)}°C</b> – <b>{day.max.toFixed(1)}°C</b><br />
-            💧 Humidity: <b>{day.humidity}%</b>
+            💧 Humidity: <b>{day.humidity}%</b><br />
+            ☁️ Cloud Cover: <b>{day.clouds}%</b>
           </p>
           <p style={{ margin: '6px 0' }}>
             <strong>Agriculture Advice:</strong> {agricultureAdvice[index]}

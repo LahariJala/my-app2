@@ -54,6 +54,7 @@ const FloodLayer = ({ show }) => {
   return null;
 };
 
+// (rest of your imports remain unchanged)
 const WeatherOverlay = ({ condition }) => {
   const map = useMap();
   useEffect(() => {
@@ -84,6 +85,7 @@ const WeatherOverlay = ({ condition }) => {
   }, [condition, map]);
   return null;
 };
+
 
 const FloodLegend = () => (
   <div style={{
@@ -168,7 +170,9 @@ const MapComponent = ({
           </Marker>
         )}
 
-        <WeatherOverlay condition={selectedWeatherCondition?.toLowerCase()} />
+{selectedLayers?.weather && (
+  <WeatherOverlay condition="clouds" />
+)}
         {selectedLayers?.flood && <FloodLayer show={true} />}
         {indiaBoundary && (
           <GeoJSON
