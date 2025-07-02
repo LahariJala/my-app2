@@ -9,10 +9,10 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
 
   const fallback = [20.5937, 78.9629]; // India default
 
-  useEffect(() => {
-    const [lat, lon] = Array.isArray(mapCenter) && mapCenter.length === 2
-      ? mapCenter
-      : fallback;
+ useEffect(() => {
+  const [lat, lon] = mapCenter?.lat && mapCenter?.lng
+    ? [mapCenter.lat, mapCenter.lng]
+    : fallback;
 
     const API_KEY = process.env.REACT_APP_OPENWEATHER_API_KEY;
 
@@ -89,7 +89,8 @@ const WeatherPopup = ({ mapCenter, onClose, style }) => {
     };
 
     fetchWeather();
-  }, [mapCenter]); // ✅ Refetch weather when location changes
+  }, [JSON.stringify(mapCenter)]);
+ // ✅ Refetch weather when location changes
 
   return (
     <div style={{
