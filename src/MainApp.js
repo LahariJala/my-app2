@@ -30,11 +30,13 @@ const MainApp = (props) => {
       <SearchBar onSelectLocation={props.onSelectLocation} />
 
       {props.showWeather && (
-        <WeatherPopup
-          mapCenter={props.mapCenter}
-          onClose={() => props.handleClosePopup("weather")}
-        />
-      )}
+  <WeatherPopup
+    key={JSON.stringify(props.mapCenter)} // 👈 Force re-mount on location change
+    mapCenter={props.mapCenter}
+    onClose={() => props.handleClosePopup("weather")}
+  />
+)}
+
       {props.showFlood && (
         <FloodPopup
           mapCenter={props.mapCenter}
