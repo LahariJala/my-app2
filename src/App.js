@@ -98,7 +98,7 @@ export default function App() {
     /* DIGIPIN */
     try {
       const digi = await fetch(
-        `http://localhost:5000/api/digipin/encode?latitude=${lat}&longitude=${lng}`
+        `https://my-app2-oimj.onrender.com/api/digipin/encode?latitude=${lat}&longitude=${lng}`
       ).then(r => r.json());
       setSelectedLocation({ lat, lng, digipin:digi.digipin || "Unavailable" });
     } catch {
@@ -131,7 +131,7 @@ export default function App() {
   const handleSelectLocation = async ({ lat, lng, name }) => {
     try {
       const digi = await fetch(
-        `http://localhost:5000/api/digipin/encode?latitude=${lat}&longitude=${lng}`
+        `https://my-app2-oimj.onrender.com/api/digipin/encode?latitude=${lat}&longitude=${lng}`
       ).then(r => r.json());
       setMapCenter({ lat, lng });
       setSelectedLocation({ lat, lng, name, digipin:digi.digipin || "Unavailable" });
