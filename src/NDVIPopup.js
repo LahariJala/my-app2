@@ -1,3 +1,4 @@
+// src/NDVIPopup.js
 import React, { useEffect, useState, useRef } from "react";
 import { Line } from "react-chartjs-2";
 import {
@@ -13,9 +14,6 @@ import {
 } from "chart.js";
 import { getTranslation } from "./i18n";
 
-// ─────────────────────────────────────────────────────────────
-//  Register Chart.js pieces once (do this in ONE component only)
-// ─────────────────────────────────────────────────────────────
 ChartJS.register(
   LineElement,
   PointElement,
@@ -24,39 +22,22 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler,
+  Filler
 );
 
-/**
- * NDVIPopup — small floating card that graphs the last 12 months of
- * 16‑day MOD13Q1 NDVI composites for the map centre.
- *
- * Props
- *  • mapCenter:  [lat, lon]   or   { lat, lng } / { lat, lon }
- *  • onClose   :  callback to hide the popup
- *  • selectedLanguage:  i18n key ( defaults to "en" )
- */
 export default function NDVIPopup({ mapCenter, onClose, selectedLanguage = "en" }) {
-  /* ── localisation ── */
   const t = getTranslation(selectedLanguage);
-
-  /* ── chart & ui state ── */
   const [chartData, setChartData] = useState(null);
   const [error, setError] = useState("");
   const abortRef = useRef(null);
 
-  /* ── normalise centre ── */
   const lat = Array.isArray(mapCenter)
     ? mapCenter[0]
-    : mapCenter?.lat ?? 20.5937; // India fallback
+    : mapCenter?.lat ?? 20.5937;
   const lon = Array.isArray(mapCenter)
     ? mapCenter[1]
     : mapCenter?.lng ?? mapCenter?.lon ?? 78.9629;
 
-  /* ─────────────────────────────────────────────────────────────
-     Fetch last 365 days of 16‑day composite NDVI values            
-     Cleanly abort when component unmounts / position changes      
-  ───────────────────────────────────────────────────────────── */
   useEffect(() => {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -66,10 +47,9 @@ export default function NDVIPopup({ mapCenter, onClose, selectedLanguage = "en" 
       setError("");
 
       try {
-        /* date window: today‑1 year … today (Julian day codes AYYYYDDD) */
         const today = new Date();
         const doy = String(
-          Math.ceil((today - new Date(today.getFullYear(), 0, 0)) / 86_400_000),
+          Math.ceil((today - new Date(today.getFullYear(), 0, 0)) / 86_400_000)
         ).padStart(3, "0");
         const endDate = `A${today.getFullYear()}${doy}`;
         const startDate = `A${today.getFullYear() - 1}${doy}`;
@@ -77,29 +57,34 @@ export default function NDVIPopup({ mapCenter, onClose, selectedLanguage = "en" 
         const url =
           `https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset` +
           `?latitude=${lat}&longitude=${lon}` +
-          `&band=250m_16_days_NDVI` +
+          `&band=NDVI_250m` +
           `&startDate=${startDate}&endDate=${endDate}` +
-          `&kmAboveBelow=0&kmLeftRight=0`;
+          `&kmAboveBelow=1&kmLeftRight=1`;
 
         const res = await fetch(url, { signal: ctrl.signal });
         if (!res.ok) throw new Error(res.statusText || "Network error");
         const json = await res.json();
+
         if (!json.subset?.length) throw new Error("NDVI: empty subset");
 
-        /* scale integers → real NDVI (×0.0001) */
-        const dataset = json.subset.map((p) => ({
-          date: p.calendar_date,
-          ndvi: p.data[0] * 0.0001,
-        }));
+        const dataset = json.subset.map((p) => {
+          const raw = Array.isArray(p.data) ? p.data[0] : p.data;
+          return {
+            date: p.calendar_date,
+            ndvi: raw == null ? null : raw * 0.0001,
+          };
+        }).filter(d => d.ndvi != null);
+
+        if (!dataset.length) throw new Error("NDVI: cloud-masked/no valid pixels");
 
         setChartData({
           labels: dataset.map((d) => d.date),
           datasets: [
             {
-              label: "NDVI",
+              label: t.ndviLabel ?? "NDVI",
               data: dataset.map((d) => d.ndvi),
               fill: true,
-              borderColor: "#7e22ce", // violet 700
+              borderColor: "#7e22ce",
               backgroundColor: "rgba(126,34,206,0.15)",
               pointRadius: 3,
               tension: 0.3,
@@ -117,33 +102,22 @@ export default function NDVIPopup({ mapCenter, onClose, selectedLanguage = "en" 
     return () => ctrl.abort();
   }, [lat, lon, t]);
 
-  if (!mapCenter) return null; // safeguard when popup mounted before map ready
+  if (!mapCenter) return null;
 
-  /* ── render ── */
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 80,
-        left: 20,
-        width: 360,
-        maxWidth: "90vw",
-        padding: "1rem",
-        background: "#fff",
-        borderRadius: 12,
-        boxShadow: "0 6px 18px rgba(0,0,0,0.25)",
-        zIndex: 1000,
-      }}
-    >
-      {/* header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 8,
-        }}
-      >
+    <div style={{
+      position: "absolute",
+      top: 80,
+      left: 20,
+      width: 360,
+      maxWidth: "90vw",
+      padding: "1rem",
+      background: "#fff",
+      borderRadius: 12,
+      boxShadow: "0 6px 18px rgba(0,0,0,0.25)",
+      zIndex: 1000,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <h3 style={{ margin: 0 }}>{t.ndviTitle ?? "NDVI"}</h3>
         <button
           onClick={onClose}
@@ -154,7 +128,6 @@ export default function NDVIPopup({ mapCenter, onClose, selectedLanguage = "en" 
         </button>
       </div>
 
-      {/* body */}
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
       {!error && !chartData && <p>{t.loading}</p>}
       {chartData && (
@@ -167,7 +140,7 @@ export default function NDVIPopup({ mapCenter, onClose, selectedLanguage = "en" 
               legend: { display: false },
               tooltip: {
                 callbacks: {
-                  label: (ctx) => `${ctx.parsed.y.toFixed(3)}`,
+                  label: (ctx) => ctx.parsed.y.toFixed(3),
                 },
               },
             },
@@ -177,9 +150,7 @@ export default function NDVIPopup({ mapCenter, onClose, selectedLanguage = "en" 
                 max: 1,
                 title: { display: true, text: "NDVI" },
               },
-              x: {
-                title: { display: true, text: t.date ?? "Date" },
-              },
+              x: { title: { display: true, text: t.date ?? "Date" } },
             },
           }}
           height={220}
