@@ -9,6 +9,7 @@ import MapComponent from "./MapComponent";
 import SearchBar from "./SearchBar";
 import NDVIPopup   from "./NDVIPopup";
 console.log("NDVI typeof:", typeof NDVIPopup, NDVIPopup);
+import SoilDataPopup from "./SoilDataPopup"; 
 
 
 

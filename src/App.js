@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 
 import MainApp    from "./MainApp";
 import FarmMarket from "./FarmMarket";
+import { fetchSoilPointData } from "./utils/fetchSoilPointData";
 
 import "./App.css";
 
