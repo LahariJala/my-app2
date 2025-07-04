@@ -10,6 +10,7 @@ const FilterBox = ({
   onWeatherToggle,
   onFloodToggle,
   onNDVIToggle,
+  onSoilDataToggle,
   onToggleCalendar,
   onAddActivity,
 }) => {
@@ -19,12 +20,7 @@ const FilterBox = ({
   const t = getTranslation(selectedLanguage);
 
   const handleButtonClick = (layer) => {
-    const newState = {
-      soilMoisture: false,
-      weather: false,
-      flood: false,
-      ndvi: false
-    };
+   const newState = { soilMoisture:false, soilData:false, weather:false, flood:false, ndvi:false };
     newState[layer] = true;
     setSelectedLayers(newState);
 
@@ -35,9 +31,12 @@ const FilterBox = ({
     } else if (layer === "flood") {
       onFloodToggle?.();
       alert("⚠️ Flood-prone areas displayed. Check dark blue zones for potential flood risk.");
-    } else if (layer === "ndvi") {
+    }else if (layer === "soilData") {
+     onSoilDataToggle?.(); 
+   } else if (layer === "ndvi") {
       onNDVIToggle?.();
     }
+    
   };
 
   const handleLanguageChange = (e) => {
@@ -86,6 +85,12 @@ const FilterBox = ({
         <button onClick={() => handleButtonClick("weather")} style={{ width: "100%", marginBottom: "6px", padding: "6px" }}>{t.weather}</button>
         <button onClick={() => handleButtonClick("flood")} style={{ width: "100%", marginBottom: "6px", padding: "6px" }}>{t.flood}</button>
         <button onClick={() => handleButtonClick("ndvi")} style={{ width: "100%", marginBottom: "6px", padding: "6px" }}>🛰️ NDVI</button>
+        <button
+   onClick={() => handleButtonClick("soilData")} 
+   style={{ width: "100%", marginBottom: 6, padding: 6 }} 
+ > 
+   {t.soilData ?? "Soil Data"} 
+ </button>
       </div>
 
       {/* 🌐 Language Selector */}
@@ -190,8 +195,9 @@ const FilterBox = ({
           </div>
         )}
       </div>
-    </div>
+    </div> 
   );
 };
 
 export default FilterBox;
+ 

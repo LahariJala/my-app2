@@ -17,6 +17,7 @@ export default function App() {
 
   const [selectedLayers, setSelectedLayers] = useState({
     soilMoisture: false,
+    soilData:     false,
     weather:      false,
     flood:        false,
     ndvi:         false          // ✅ NDVI layer flag
@@ -29,6 +30,8 @@ export default function App() {
   const [showWeather, setShowWeather] = useState(false);
   const [showFlood,   setShowFlood]   = useState(false);
   const [showNDVI,    setShowNDVI]    = useState(false);
+  const [showSoilData,setShowSoilData] = useState(false);
+ const [soilPopup,   setSoilPopup]   = useState(null);
 
   /* activity UI flags */
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -75,16 +78,32 @@ export default function App() {
     setSelectedLayers({ soilMoisture:false, weather:false, flood:false, ndvi:true });
     setShowNDVI(true); setShowWeather(false); setShowFlood(false);
   };
+  const toggleSoilData = () => {
+   setSelectedLayers({ soilMoisture:false, soilData:true, weather:false, flood:false, ndvi:false }); 
+   setShowSoilData(true); 
+   setShowWeather(false); setShowFlood(false); setShowNDVI(false); 
+   setSoilPopup(null); 
+ };
 
   const handleClosePopup = (type) => {
     if (type === "weather") setShowWeather(false);
     if (type === "flood")   setShowFlood(false);
     if (type === "ndvi")    setShowNDVI(false);   // ✅ close NDVI
+   if (type === "soil")    setShowSoilData(false);
   };
 
   /* ─────────── MAP CLICK ─────────── */
   const handleMapClick = async ({ lat, lng }) => {
     setMapCenter({ lat, lng });
+
+    if (showSoilData) {
+     try { 
+       const data = await fetchSoilPointData(lat, lng); 
+       setSoilPopup({ lat, lon: lng, data }); 
+     } catch { alert("Soil data fetch failed"); } 
+   } else { 
+       setSoilPopup(null); 
+   }
 
     /* weather symbol */
     try {
@@ -156,11 +175,13 @@ export default function App() {
             onWeatherToggle={toggleWeather}
             onFloodToggle={toggleFlood}
             onNDVIToggle={toggleNDVI}
+             onSoilDataToggle={toggleSoilData}
 
             /* popups */
             showWeather={showWeather}
             showFlood={showFlood}
             showNDVI={showNDVI}
+            showSoilData={showSoilData}
             handleClosePopup={handleClosePopup}
 
             /* map */

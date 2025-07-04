@@ -31,10 +31,10 @@ const FlyToLocation = ({ center }) => {
   return null;
 };
 
-const MapEvents = ({ onMapClick }) => {
+const MapEvents = ({ onMapClick, enable }) => {
   useMapEvents({
     click(e) {
-      onMapClick?.({ lat: e.latlng.lat, lng: e.latlng.lng });
+      if (enable) onMapClick?.({ lat: e.latlng.lat, lng: e.latlng.lng });
     }
   });
   return null;
@@ -113,7 +113,8 @@ const MapComponent = ({
   selectedWeatherCondition,
   selectedLanguage,
   onMapClick,
-  showSoilMoisture
+  showSoilMoisture,
+  showSoilData
 }) => {
   const mapRef = useRef();
   const [indiaBoundary, setIndiaBoundary] = useState(null);
@@ -158,7 +159,7 @@ const MapComponent = ({
         />
 
         <FlyToLocation center={mapCenter} />
-        <MapEvents onMapClick={handleMapClick} />
+        <MapEvents onMapClick={handleMapClick} enable={showSoilData} />
 
         {mapCenter?.lat && mapCenter?.lng && (
           <Marker position={[mapCenter.lat, mapCenter.lng]}>

@@ -11,6 +11,7 @@ import NDVIPopup   from "./NDVIPopup";
 console.log("NDVI typeof:", typeof NDVIPopup, NDVIPopup);
 
 
+
 const MainApp = (props) => {
   return (
     <>
@@ -25,6 +26,7 @@ const MainApp = (props) => {
         onToggleCalendar={props.onToggleCalendar}
         onAddActivity={props.onAddActivity}
         onNDVIToggle={props.onNDVIToggle}
+        onSoilDataToggle={props.onSoilDataToggle}
       />
 
       <SearchBar onSelectLocation={props.onSelectLocation} />
@@ -43,6 +45,16 @@ const MainApp = (props) => {
           onClose={() => props.handleClosePopup("flood")}
         />
       )}
+
+      {props.showSoilData && props.soilPopup && (
+  <SoilDataPopup
+    lat={props.soilPopup.lat}
+    lon={props.soilPopup.lon}
+    data={props.soilPopup.data}
+    onClose={() => props.handleClosePopup("soil")}
+  />
+)}
+
 
       {props.showLogger && props.selectedLocation && (
         <ActivityLogger
@@ -80,7 +92,8 @@ const MainApp = (props) => {
         digipin={props.selectedLocation?.digipin}
         selectedLanguage={props.selectedLanguage}
         showSoilMoisture={props.selectedLayers.soilMoisture} // ✅ FIXED
-      />
+        showSoilData={props.selectedLayers.soilData}
+    />
     </>
   );
 };
