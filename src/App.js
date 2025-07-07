@@ -97,14 +97,17 @@ export default function App() {
   const handleMapClick = async ({ lat, lng }) => {
     setMapCenter({ lat, lng });
 
-    if (showSoilData) {
-     try { 
-       const data = await fetchSoilPointData(lat, lng); 
-       setSoilPopup({ lat, lon: lng, data }); 
-     } catch { alert("Soil data fetch failed"); } 
-   } else { 
-       setSoilPopup(null); 
-   }
+   if (showSoilData) {
+  try {
+    const data = await fetchSoilPointData(lat, lng);
+    setSoilPopup({ lat, lon: lng, data });
+  } catch {
+    alert("Soil data fetch failed");
+  }
+} else {
+  setSoilPopup(null);
+}
+
 
     /* weather symbol */
     try {
