@@ -186,6 +186,7 @@ export default function App() {
             showFlood={showFlood}
             showNDVI={showNDVI}
             showSoilData={showSoilData}
+            soilPopup={soilPopup}
             handleClosePopup={handleClosePopup}
 
             /* map */
