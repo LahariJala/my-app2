@@ -152,15 +152,25 @@ export default function App() {
 
   /* search bar selection */
   const handleSelectLocation = async ({ lat, lng, name }) => {
-    try {
-      const digi = await fetch(
-        `https://my-app2-oimj.onrender.com/api/digipin/encode?latitude=${lat}&longitude=${lng}`
-      ).then(r => r.json());
-      setMapCenter({ lat, lng });
-      setSelectedLocation({ lat, lng, name, digipin:digi.digipin || "Unavailable" });
-    } catch {/* ignore */}
-  };
+  try {
+    const digi = await fetch(
+      `https://my-app2-oimj.onrender.com/api/digipin/encode?latitude=${lat}&longitude=${lng}`
+    ).then(r => r.json());
+    setMapCenter({ lat, lng });
+    setSelectedLocation({ lat, lng, name, digipin: digi.digipin || "Unavailable" });
 
+    if (showSoilData) {
+      try {
+        const data = await fetchSoilPointData(lat, lng);
+        setSoilPopup({ lat, lon: lng, data });
+      } catch {
+        alert("Soil data fetch failed");
+      }
+    } else {
+      setSoilPopup(null);
+    }
+  } catch {/* ignore */}
+};
   /* ─────────── ROUTES ─────────── */
   return (
     <Routes>

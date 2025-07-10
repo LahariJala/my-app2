@@ -49,16 +49,6 @@ const MainApp = (props) => {
         />
       )}
 
-      {props.showSoilData && props.soilPopup && (
-  <SoilDataPopup
-    lat={props.soilPopup.lat}
-    lon={props.soilPopup.lon}
-    data={props.soilPopup.data}
-    onClose={() => props.handleClosePopup("soil")}
-  />
-)}
-
-
       {props.showLogger && props.selectedLocation && (
         <ActivityLogger
           location={props.selectedLocation}
@@ -86,6 +76,16 @@ const MainApp = (props) => {
      selectedLanguage={props.selectedLanguage}
   />
 )}
+
+{props.showSoilData && props.soilPopup && (
+  <SoilDataPopup
+    lat={props.soilPopup.lat}
+    lon={props.soilPopup.lon}
+    data={props.soilPopup.data}
+    onClose={() => props.handleClosePopup("soil")}
+  />
+)}
+
 
       <MapComponent
         mapCenter={props.mapCenter}
