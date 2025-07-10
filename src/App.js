@@ -62,6 +62,21 @@ export default function App() {
     return () => clearInterval(id);
   }, [activityLog, remindedActivities]);
 
+  useEffect(() => {
+  const fetchDataIfNeeded = async () => {
+    if (showSoilData && mapCenter?.lat && mapCenter?.lng) {
+      try {
+        const data = await fetchSoilPointData(mapCenter.lat, mapCenter.lng);
+        setSoilPopup({ lat: mapCenter.lat, lon: mapCenter.lng, data });
+      } catch {
+        alert("Soil data fetch failed");
+      }
+    }
+  };
+  fetchDataIfNeeded();
+}, [showSoilData, mapCenter]);
+
+
   /* ─────────── LAYER TOGGLES ─────────── */
   const toggleSoilMoisture = () => {
     setSelectedLayers({ soilMoisture:true, weather:false, flood:false, ndvi:false });
